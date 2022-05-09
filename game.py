@@ -1,7 +1,24 @@
 from SECRET import token
 import nextcord, time
+from dotenv import load_dotenv
 from nextcord import Interaction
 from nextcord.ext import commands
+
+import logging
+import os
+from typing import Optional
+
+from utils import (
+    daily_puzzle_id,
+    generate_info_embed,
+    generate_puzzle_embed,
+    process_message_as_guess,
+    random_puzzle_id,
+)
+
+logging.basicConfig(level=logging.INFO)
+load_dotenv()
+activity = nextcord.Activity(type=nextcord.ActivityType.listening, name="/play")
 
 intents = nextcord.Intents.default()
 intents.members = True
@@ -294,7 +311,11 @@ async def start(ctx):
             await ctx.send("Did you know that trees talk to each other using an internet of fungus?")
             time.sleep(1)
             await ctx.send("You’ll find them using the fungal network to share nutrients and information, or even sabotage unwelcome plants by spreading toxic chemicals through the network.")
-
+            time.sleep(2)
+            await ctx.send("If you are more interested have a look at this video😊")
+            time.sleep(1)
+            await ctx.send("https://www.youtube.com/watch?v=7kHZ0a_6TxY")
+            
         time.sleep(1)
 
         view = land2()
@@ -317,6 +338,10 @@ async def start(ctx):
             await ctx.send("Noise pollution from naval activity, the oil and gas industry, seismic surveys and underwater construction can stress and injure cetaceans.")
             time.sleep(1)
             await ctx.send("It also severely interferes with their ability to communicate, reproduce, navigate and find prey - sometimes proving fatal.")
+            time.sleep(1.5)
+            await ctx.send("Check this video if you want to know more on how noise affets aquatic life👇👇")
+            time.sleep(1)
+            await ctx.send("https://www.youtube.com/watch?v=0f6xWoYfGj0")
         
         elif view.value == 'shark':
             view = quizshark()
@@ -364,11 +389,19 @@ async def start(ctx):
             await ctx.send("I once knew a cactus that lived on Sesame Street.")
             time.sleep(1)
             await ctx.send("I used to call it *Prickle me Elmo*.")
+            time.sleep(1)
+            await ctx.send("It's owner was like I know there's something wrong with my cactus, but I just can't put my finger on it.")
+            time.sleep(2)
+            await ctx.send("🤣🤣🤣🤣")
         
         elif view.value == 'camel':
             await ctx.send("Did you know camels not only live in hot environments?")
             time.sleep(1)
             await ctx.send("They're adaptable to both the extreme cold and hot!")
+            time.sleep(1)
+            await ctx.send("If you want to know more amazing facts about camels, you'll sure love this👇👇")
+            time.sleep(1)
+            await ctx.send("https://www.youtube.com/watch?v=Yvhom1GRGJU")
 
         elif view.value == 'sun':
             view = quizsun()
@@ -403,6 +436,94 @@ async def start(ctx):
 
     else:
         print("Cancelled")
+        
+#  Wordle-game
+GUILD_IDS = (
+    [int(guild_id) for guild_id in os.getenv("GUILD_IDS").split(",")]
+    if os.getenv("GUILD_IDS", None)
+    else nextcord.utils.MISSING
+)
+
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}")
+
+
+@bot.slash_command(name="play", description="Play Wordle Clone", guild_ids=GUILD_IDS)
+async def slash_play(interaction: nextcord.Interaction):
+    """This command has subcommands for playing a game of Wordle Clone."""
+    pass
+
+
+@slash_play.subcommand(name="random", description="Play a random game of Wordle Clone")
+async def slash_play_random(interaction: nextcord.Interaction):
+    embed = generate_puzzle_embed(interaction.user, random_puzzle_id())
+    await interaction.send(embed=embed)
+
+
+@slash_play.subcommand(name="id", description="Play a game of Wordle Clone by its ID")
+async def slash_play_id(
+    interaction: nextcord.Interaction,
+    puzzle_id: int = nextcord.SlashOption(description="Puzzle ID of the word to guess"),
+):
+    embed = generate_puzzle_embed(interaction.user, puzzle_id)
+    await interaction.send(embed=embed)
+
+
+@slash_play.subcommand(name="daily", description="Play the daily game of Wordle Clone")
+async def slash_play_daily(interaction: nextcord.Interaction):
+    embed = generate_puzzle_embed(interaction.user, daily_puzzle_id())
+    await interaction.send(embed=embed)
+
+
+@bot.slash_command(name="info", description="Wordle Clone Info", guild_ids=GUILD_IDS)
+async def slash_info(interaction: nextcord.Interaction):
+    await interaction.send(embed=generate_info_embed())
+
+
+@bot.group(invoke_without_command=True)
+async def play(ctx: commands.Context, puzzle_id: Optional[int] = None):
+    """Play a game of Wordle Clone"""
+    embed = generate_puzzle_embed(ctx.author, puzzle_id or random_puzzle_id())
+    await ctx.reply(embed=embed, mention_author=False)
+
+
+@play.command(name="random")
+async def play_random(ctx: commands.Context):
+    """Play a random game of Wordle Clone"""
+    embed = generate_puzzle_embed(ctx.author, random_puzzle_id())
+    await ctx.reply(embed=embed, mention_author=False)
+
+
+@play.command(name="id")
+async def play_id(ctx: commands.Context, puzzle_id: int):
+    """Play a game of Wordle Clone by its ID"""
+    embed = generate_puzzle_embed(ctx.author, puzzle_id)
+    await ctx.reply(embed=embed, mention_author=False)
+
+
+@play.command(name="daily")
+async def play_daily(ctx: commands.Context):
+    """Play the daily game of Wordle Clone"""
+    embed = generate_puzzle_embed(ctx.author, daily_puzzle_id())
+    await ctx.reply(embed=embed, mention_author=False)
+
+
+@bot.command()
+async def info(ctx: commands.Context):
+    """Info about Discord Wordle Clone"""
+    await ctx.reply(embed=generate_info_embed(), mention_author=False)
+
+
+@bot.event
+async def on_message(message: nextcord.Message):
+    """
+    When a message is sent, process it as a guess.
+    Then, process any commands in the message if it's not a guess.
+    """
+    processed_as_guess = await process_message_as_guess(bot, message)
+    if not processed_as_guess:
+        await bot.process_commands(message)
 
 bot.run(token)
 
