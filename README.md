@@ -29,4 +29,14 @@ We hope to improve the UI of our bot to be more game-like and also add more mini
 
 ![image](https://user-images.githubusercontent.com/66497192/167303596-2640e4c2-b197-4eae-bd94-2d5d68e17f22.png)
 Get your discord bot token and put it inside the SECRET.py file <br />
-Run the code and it should be good to go :thumbsup:
+If you haven't installed nextcord, requests, or dotenv do so with the following commands (for python 3.0 versions): <br />
+```bash
+pip install nextcord
+pip3 install requests
+pip3 install python-dotenv
+```
+If you already have discord.py installed, it might clash with nextcord and not work so use ```pip uninstall discord.py``` to uninstall it.
+
+Run the game.py file and it should be good to go :thumbsup: <br />
+Start the bot with the command ```!start``` and start your environmental adventure!
+![image](https://user-images.githubusercontent.com/66497192/167534401-0217ac64-bde6-4b00-9876-669a2d9a89e8.png)
